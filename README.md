@@ -4,8 +4,10 @@ This repository consists of a number of 'recipes' for using IRSX to achieve comm
 
 To run these as notebooks on your own machine, clone the repo, run `$ pip install -r requirements.txt` to install the requirements, and start a jupyter notebook with `$ jupyter notebook`.
 
+IRSx docs are [here](https://github.com/jsfenfen/990-xml-reader#irsx); a variable reference is [here](http://irsx.info/).
 
-# Cookbooks
+
+# Recipes
 
 1. [Get all the efilers from a city in a given year](https://github.com/jsfenfen/irsx_cookbook/blob/master/1.get_filers_from_year_city.ipynb)
 
