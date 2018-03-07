@@ -23,7 +23,109 @@ class StreamExtractor(object):
             dw.writeheader()
             self.output_streams[stream_key]['writer'] = dw
 
-    def run_filing(self, filing):
+
+
+    def run_parts(self, this_capture_sked, parsed_sked, sked, taxpayer_name=""):
+        for part_key in this_capture_sked['parts'].keys():
+            stream_key = this_capture_sked['parts'][part_key]['stream_key']
+            this_stream = self.output_streams[stream_key]
+            part = None
+            try:
+                part = parsed_sked['schedule_parts'][part_key]
+            except KeyError:
+                continue
+
+            capture_dict = this_capture_sked['parts'][part_key]
+
+            row_data = {}
+            row_data['form'] = sked
+            row_data['source'] = part_key
+            row_data['year'] = self.year
+            row_data['taxpayer_name'] = taxpayer_name
+
+
+            for capture_key in capture_dict.keys():
+                if capture_key == 'stream_key':
+                    continue
+                try:
+                    val = part[capture_key]
+                    csv_header = capture_dict[capture_key]['header']
+                    row_data[csv_header] = val
+
+                except KeyError:
+                    try:
+                        default = capture_dict[capture_key]['default']
+                        csv_header = capture_dict[capture_key]['header']
+                        row_data[csv_header]=default
+                    except KeyError:
+                        pass
+
+            ## Composite keys: Not implemented here. 
+
+
+            ## We've gone through who whole part -- write it to file
+            this_stream['writer'].writerow(row_data)
+
+
+
+    def run_groups(self, this_capture_sked, parsed_sked, sked, taxpayer_name=""):
+        for group_key in this_capture_sked['groups'].keys():
+            stream_key = this_capture_sked['groups'][group_key]['stream_key']
+            this_stream = self.output_streams[stream_key]
+            groups = None
+            try:
+                groups = parsed_sked['groups'][group_key]
+            except KeyError:
+                #print("No groups found for %s\n" % group_key)
+                continue
+
+            for group in groups:
+                capture_dict = this_capture_sked['groups'][group_key]
+                row_data = {}
+                row_data['form'] = sked
+                row_data['source'] = group_key
+                row_data['year'] = self.year
+                row_data['taxpayer_name'] = taxpayer_name
+
+                for capture_key in capture_dict.keys():
+                    if capture_key == 'stream_key':
+                        continue
+                    try:
+                        val = group[capture_key]
+                        csv_header = capture_dict[capture_key]['header']
+                        row_data[csv_header] = val
+
+                    except KeyError:
+                        try:
+                            default = capture_dict[capture_key]['default']
+                            csv_header = capture_dict[capture_key]['header']
+                            row_data[csv_header]=default
+                        except KeyError:
+                            pass
+
+                ## now look for "composite keys"
+                composite_groups = None
+                try:
+                    composite_groups = capture_dict['composite']
+                except KeyError:
+                    pass
+
+                # composite groups are summed up from existing vars, and need a default
+                if composite_groups:
+                    for composite_group_key in composite_groups.keys():
+                        total = 0
+                        for cg_part in composite_groups[composite_group_key].keys():
+                            try:
+                                val = group[cg_part]
+                                total += int(val)
+                            except KeyError:
+                                total += composite_groups[composite_group_key][cg_part]['default']
+                        row_data[composite_group_key] = total
+
+                ## We've gone through who whole group -- write it to file
+                this_stream['writer'].writerow(row_data)
+
+    def run_filing(self, filing, taxpayer_name=""):
 
         parsed_filing = self.xml_runner.run_filing(filing)
         schedule_list = parsed_filing.list_schedules()
@@ -40,69 +142,27 @@ class StreamExtractor(object):
                     parsed_sked = parsed_skeds[0]
                 else:
                     continue
-
-                #print(json.dumps(parsed_sked, indent=4, sort_keys=True))
         
                 this_capture_sked = self.data_capture_dict[sked]
             
+
+                ### Repeating Groups 
+                skip_groups = False
                 try:
-                    this_capture_sked['groups']
+                     this_capture_sked['groups']
                 except KeyError:
-                    continue
-
-                for group_key in this_capture_sked['groups'].keys():
-                    stream_key = this_capture_sked['groups'][group_key]['stream_key']
-                    this_stream = self.output_streams[stream_key]
-                    groups = None
-                    try:
-                        groups = parsed_sked['groups'][group_key]
-                    except KeyError:
-                        #print("No groups found for %s\n" % group_key)
-                        continue
-
-                    for group in groups:
-                        capture_dict = this_capture_sked['groups'][group_key]
-                        row_data = {}
-                        row_data['form'] = sked
-                        row_data['source'] = group_key
-                        row_data['year'] = self.year
-
-                        for capture_key in capture_dict.keys():
-                            if capture_key == 'stream_key':
-                                continue
-                            try:
-                                val = group[capture_key]
-                                csv_header = capture_dict[capture_key]['header']
-                                row_data[csv_header] = val
-
-                            except KeyError:
-                                try:
-                                    default = capture_dict[capture_key]['default']
-                                    csv_header = capture_dict[capture_key]['header']
-                                    row_data[csv_header]=default
-                                except KeyError:
-                                    pass
-
-                        ## now look for "composite keys"
-                        composite_groups = None
-                        try:
-                            composite_groups = capture_dict['composite']
-                        except KeyError:
-                            pass
-
-                        # composite groups are summed up from existing vars, and need a default
-                        if composite_groups:
-                            for composite_group_key in composite_groups.keys():
-                                total = 0
-                                for cg_part in composite_groups[composite_group_key].keys():
-                                    try:
-                                        val = group[cg_part]
-                                        total += int(val)
-                                    except KeyError:
-                                        total += composite_groups[composite_group_key][cg_part]['default']
-                                row_data[composite_group_key] = total
-
-                        ## We've gone through who whole group -- write it to file
-                        this_stream['writer'].writerow(row_data)
+                     skip_groups = True
+                if not skip_groups:
+                    self.run_groups(this_capture_sked, parsed_sked, sked, taxpayer_name=taxpayer_name)
 
 
+                ### Nonrepeating schedule parts 
+                skip_parts = False
+                try:
+                     this_capture_sked['parts']
+                except KeyError:
+                     skip_parts = True
+                if not skip_parts:
+                    self.run_parts(this_capture_sked, parsed_sked, sked, taxpayer_name=taxpayer_name)
+
+                
