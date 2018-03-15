@@ -2,9 +2,11 @@
 
 This repository consists of a number of 'recipes' for using IRSx to achieve common tasks. Most recipes are present in their own notebook; some have additional dependencies beyond IRSx. The notebooks are styled to be readable rather than the model of exemplary python.
 
+The more general IRSx documentation is [here](https://github.com/jsfenfen/990-xml-reader#irsx); a variable name reference is [here](http://irsx.info/).
+
+
 To run these as notebooks on your own machine, clone the repo, run `$ pip install -r requirements.txt` to install the requirements, and start a jupyter notebook with `$ jupyter notebook`.
 
-IRSx docs are [here](https://github.com/jsfenfen/990-xml-reader#irsx); a variable reference is [here](http://irsx.info/).
 
 
 # Recipes
