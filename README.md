@@ -32,4 +32,4 @@ Amazon distributes a custom command line tool (AWS CLI) see more [here](https://
 
 ## Other Repositories
 
-IRSx is focused on reading xml forms using well-defined metadata; that metadata was *created* using [irs990_admin](https://github.com/jsfenfen/irs990_admin). The repo 
+IRSx is focused on reading xml forms using well-defined metadata; that metadata was *created* using [irs990_admin](https://github.com/jsfenfen/irs990_admin). 
