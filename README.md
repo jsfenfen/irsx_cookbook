@@ -4,6 +4,8 @@ This repository consists of a number of 'recipes' for using IRSx to achieve comm
 
 The more general IRSx documentation is [here](https://github.com/jsfenfen/990-xml-reader#irsx); a variable name reference is [here](http://irsx.info/).
 
+If you're just looking to dump all the filings into a relational database (~180 tables) there's a django project for that [here](https://github.com/jsfenfen/990-xml-database). 
+
 
 To run these as notebooks on your own machine, clone the repo, run `$ pip install -r requirements.txt` to install the requirements, and start a jupyter notebook with `$ jupyter notebook`.
 
